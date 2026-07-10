@@ -18,3 +18,4 @@ __pycache__/
 # --- IDE Configurations ---
 # Optional: Ignores local VS Code editor settings
 .vscode/
+.streamlit/
