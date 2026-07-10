@@ -42,8 +42,14 @@ if str_ui.button("Run Feasibility Analysis", type="primary"):
         str_ui.warning("Please enter a valid idea first!")
     else:
         with str_ui.spinner("Analyzing market dynamics, legal hurdles, and capital efficiency..."):
-            verdict = engine.analyze(user_input)
-            
-        str_ui.success("Analysis Complete!")
-        str_ui.markdown("### 📊 Venture Capitalist Verdict")
-        str_ui.info(verdict)
+            try:
+                # Fetching the critique from the AI engine
+                verdict = engine.analyze(user_input)
+                
+                str_ui.success("Analysis Complete!")
+                str_ui.markdown("### 📊 Venture Capitalist Verdict")
+                str_ui.info(verdict)
+                
+            except Exception as e:
+                str_ui.error(f"An error occurred during analysis: {e}")
+                str_ui.info("Tip: Double check that your API key is correctly configured.")

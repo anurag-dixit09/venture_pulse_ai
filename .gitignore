@@ -1,0 +1,20 @@
+# --- Security Secrets (CRITICAL) ---
+# Prevents your Gemini API keys from ever leaking to GitHub
+.streamlit/secrets.toml
+
+# --- Python Environment & Caches ---
+# Ignores your local virtual environment libraries
+venv/
+.venv/
+env/
+
+# Ignores compiled Python files and runtime caches
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# --- IDE Configurations ---
+# Optional: Ignores local VS Code editor settings
+.vscode/
