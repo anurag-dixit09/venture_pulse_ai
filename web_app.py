@@ -84,12 +84,20 @@ st.set_page_config(
     layout="wide" # Wide layout to accommodate the side navigation properly
 )
 
-# Configure the Gemini API using Streamlit Secrets safely
-try:
-    genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
-except Exception as e:
-    st.error("⚠️ API Key missing or misconfigured in .streamlit/secrets.toml")
-    st.stop()
+# ==============================================================================
+# 🔑 CORE GEMINI API CONFIGURATION & STATUS CHECK
+# ==============================================================================
+api_authenticated = False
+
+if "GEMINI_API_KEY" in st.secrets and st.secrets["GEMINI_API_KEY"].strip() != "":
+    try:
+        # Secure initialization using secrets manager
+        genai.configure(api_key=st.secrets["GEMINI_API_KEY"])
+        api_authenticated = True
+    except Exception as e:
+        api_authenticated = False
+else:
+    api_authenticated = False
 
 # Custom Institutional Dark Analytics Theme CSS Injection
 st.markdown("""
@@ -519,98 +527,160 @@ with col_main_content:
                 Analyze capital allocation strategy, burn rate dangers, monetization feasibility, and estimated runway duration.
                 """
                 
-                try:
-                    # Model call using gemini-1.5-flash
-                    model = genai.GenerativeModel('gemini-1.5-flash')
-                    response = model.generate_content(prompt)
-                    raw_result = response.text
-                    
-                    st.markdown(f'<h3 style="color:#DBB8FF; margin-top: 30px;">📊 VC Audit Output: {startup_name}</h3>', unsafe_allow_html=True)
-                    
-                    # Split parts cleanly
-                    p1_idx = raw_result.find("PART 1")
-                    p2_idx = raw_result.find("PART 2")
-                    p3_idx = raw_result.find("PART 3")
-                    
-                    if p1_idx != -1 and p2_idx != -1 and p3_idx != -1:
-                        m_text = raw_result[p1_idx:p2_idx].replace("PART 1: MARKET DYNAMICS", "").strip()
-                        l_text = raw_result[p2_idx:p3_idx].replace("PART 2: LEGAL & COMPLIANCE", "").strip()
-                        f_text = raw_result[p3_idx:].replace("PART 3: FINANCIAL SUSTAINABILITY", "").strip()
-                    else:
-                        m_text = raw_result
-                        l_text = "Review structural legal parameters relative to target sector compliance."
-                        f_text = f"Audit runway variables against starting allocation metric of ₹{budget:,}."
+                if api_authenticated:
+                    try:
+                        # Model call using gemini-1.5-flash
+                        model = genai.GenerativeModel('gemini-1.5-flash')
+                        response = model.generate_content(prompt)
+                        raw_result = response.text
 
-                    # Expanders with institutional visual design
-                    with st.expander("👁️ Market Dynamics & Risk Analysis", expanded=True):
-                        # Inject metric cards first
-                        st.markdown("""
-                            <div class="metric-container">
-                                <div class="metric-card">
-                                    <div class="metric-label">Saturation Score</div>
-                                    <div class="metric-value neutral">Moderate (42%)</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Growth Index</div>
-                                    <div class="metric-value positive">+12.4% YoY</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Risk Rating</div>
-                                    <div class="metric-value positive">Alpha-6 (Low)</div>
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{m_text}</div>', unsafe_allow_html=True)
+                        st.markdown(f'<h3 style="color:#DBB8FF; margin-top: 30px;">📊 VC Audit Output: {startup_name}</h3>', unsafe_allow_html=True)
 
-                    with st.expander("⚖️ Legal & Regulatory Compliance Obstacles", expanded=False):
-                        st.markdown("""
-                            <div class="metric-container">
-                                <div class="metric-card">
-                                    <div class="metric-label">DPDP Alignment</div>
-                                    <div class="metric-value positive">Compliant</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Tax Exposure</div>
-                                    <div class="metric-value neutral">GST Standard</div>
-                                </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Regulatory Barrier</div>
-                                    <div class="metric-value negative">Medium Risk</div>
-                                </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{l_text}</div>', unsafe_allow_html=True)
+                        # Split parts cleanly
+                        p1_idx = raw_result.find("PART 1")
+                        p2_idx = raw_result.find("PART 2")
+                        p3_idx = raw_result.find("PART 3")
 
-                    with st.expander("💰 Capitalization & Runway Evaluation", expanded=False):
-                        st.markdown("""
-                            <div class="metric-container">
-                                <div class="metric-card">
-                                    <div class="metric-label">Estimated Runway</div>
-                                    <div class="metric-value positive">18 Months</div>
+                        if p1_idx != -1 and p2_idx != -1 and p3_idx != -1:
+                            m_text = raw_result[p1_idx:p2_idx].replace("PART 1: MARKET DYNAMICS", "").strip()
+                            l_text = raw_result[p2_idx:p3_idx].replace("PART 2: LEGAL & COMPLIANCE", "").strip()
+                            f_text = raw_result[p3_idx:].replace("PART 3: FINANCIAL SUSTAINABILITY", "").strip()
+                        else:
+                            m_text = raw_result
+                            l_text = "Review structural legal parameters relative to target sector compliance."
+                            f_text = f"Audit runway variables against starting allocation metric of ₹{budget:,}."
+
+                        # Expanders with institutional visual design
+                        with st.expander("👁️ Market Dynamics & Risk Analysis", expanded=True):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Saturation Score</div>
+                                        <div class="metric-value neutral">Moderate (42%)</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Growth Index</div>
+                                        <div class="metric-value positive">+12.4% YoY</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Risk Rating</div>
+                                        <div class="metric-value positive">Alpha-6 (Low)</div>
+                                    </div>
                                 </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Burn Rate Est</div>
-                                    <div class="metric-value neutral">$35k / Mo</div>
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{m_text}</div>', unsafe_allow_html=True)
+
+                        with st.expander("⚖️ Legal & Regulatory Compliance Obstacles", expanded=False):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">DPDP Alignment</div>
+                                        <div class="metric-value positive">Compliant</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Tax Exposure</div>
+                                        <div class="metric-value neutral">GST Standard</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Regulatory Barrier</div>
+                                        <div class="metric-value negative">Medium Risk</div>
+                                    </div>
                                 </div>
-                                <div class="metric-card">
-                                    <div class="metric-label">Feasibility Index</div>
-                                    <div class="metric-value positive">High</div>
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{l_text}</div>', unsafe_allow_html=True)
+
+                        with st.expander("💰 Capitalization & Runway Evaluation", expanded=False):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Estimated Runway</div>
+                                        <div class="metric-value positive">18 Months</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Burn Rate Est</div>
+                                        <div class="metric-value neutral">₹35k / Mo</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Feasibility Index</div>
+                                        <div class="metric-value positive">High</div>
+                                    </div>
                                 </div>
-                            </div>
-                        """, unsafe_allow_html=True)
-                        st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{f_text}</div>', unsafe_allow_html=True)
-                        
-                except Exception as e:
-                    st.warning(f"⚠️ Note: Using mock simulation data because the configured Gemini API key is unauthenticated. Please configure a valid key in .streamlit/secrets.toml")
-                    
-                    # Generate rich mock data
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{f_text}</div>', unsafe_allow_html=True)
+                    except Exception:
+                        st.warning("⚠️ Note: Using mock simulation data because the configured Gemini API key is unauthenticated. Please configure a valid key in .streamlit/secrets.toml")
+
+                        m_text = f"The Indian {industry} market presents significant, highly localized dynamics. Market adoption in this sector is currently growing at a rapid pace of 12.4% YoY. Key adoption barriers include customer skepticism around onboarding times and data confidentiality. However, mid-market enterprises show a strong willingness to adopt automated platforms that offer direct cost efficiencies or clear revenue upside. Competitor saturation is moderate, leaving high potential for a differentiated product like {startup_name} to capture early market share."
+
+                        l_text = "Operating within the Indian regulatory environment requires strict adherence to local compliance matrices. Specifically: \n- **DPDP Act (2023)**: Since the platform processes user-related information, data localization and explicit consent frameworks must be engineered into the database architecture. \n- **GST Compliance**: Tax structures must dynamically adjust to local B2B/B2C rules. \n- **RBI Guidelines**: Any integrated payment gateways or transaction routing must comply with RBI regulations on recurring payments and merchant onboarding."
+
+                        f_text = f"With an estimated starting allocation of ₹{budget:,}, runway duration is projected at approximately 18 months based on a standard monthly operational burn of ₹35k. Monetization should target high-margin subscription models to secure cash-flow neutrality before runway depletion. Strategic allocation should prioritize key customer-facing features while keeping marketing/acquisition burn low through organic B2B outreach."
+
+                        with st.expander("👁️ Market Dynamics & Risk Analysis", expanded=True):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Saturation Score</div>
+                                        <div class="metric-value neutral">Moderate (42%)</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Growth Index</div>
+                                        <div class="metric-value positive">+12.4% YoY</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Risk Rating</div>
+                                        <div class="metric-value positive">Alpha-6 (Low)</div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{m_text}</div>', unsafe_allow_html=True)
+
+                        with st.expander("⚖️ Legal & Regulatory Compliance Obstacles", expanded=False):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">DPDP Alignment</div>
+                                        <div class="metric-value positive">Compliant</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Tax Exposure</div>
+                                        <div class="metric-value neutral">GST Standard</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Regulatory Barrier</div>
+                                        <div class="metric-value negative">Medium Risk</div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{l_text}</div>', unsafe_allow_html=True)
+
+                        with st.expander("💰 Capitalization & Runway Evaluation", expanded=False):
+                            st.markdown("""
+                                <div class="metric-container">
+                                    <div class="metric-card">
+                                        <div class="metric-label">Estimated Runway</div>
+                                        <div class="metric-value positive">18 Months</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Burn Rate Est</div>
+                                        <div class="metric-value neutral">₹35k / Mo</div>
+                                    </div>
+                                    <div class="metric-card">
+                                        <div class="metric-label">Feasibility Index</div>
+                                        <div class="metric-value positive">High</div>
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                            st.markdown(f'<div style="color: #CEC2D6; line-height: 1.6; font-size: 0.95rem;">{f_text}</div>', unsafe_allow_html=True)
+                else:
+                    st.warning("⚠️ Note: Using mock simulation data because the configured Gemini API key is unauthenticated. Please configure a valid key in .streamlit/secrets.toml")
+
                     m_text = f"The Indian {industry} market presents significant, highly localized dynamics. Market adoption in this sector is currently growing at a rapid pace of 12.4% YoY. Key adoption barriers include customer skepticism around onboarding times and data confidentiality. However, mid-market enterprises show a strong willingness to adopt automated platforms that offer direct cost efficiencies or clear revenue upside. Competitor saturation is moderate, leaving high potential for a differentiated product like {startup_name} to capture early market share."
-                    
+
                     l_text = "Operating within the Indian regulatory environment requires strict adherence to local compliance matrices. Specifically: \n- **DPDP Act (2023)**: Since the platform processes user-related information, data localization and explicit consent frameworks must be engineered into the database architecture. \n- **GST Compliance**: Tax structures must dynamically adjust to local B2B/B2C rules. \n- **RBI Guidelines**: Any integrated payment gateways or transaction routing must comply with RBI regulations on recurring payments and merchant onboarding."
-                    
+
                     f_text = f"With an estimated starting allocation of ₹{budget:,}, runway duration is projected at approximately 18 months based on a standard monthly operational burn of ₹35k. Monetization should target high-margin subscription models to secure cash-flow neutrality before runway depletion. Strategic allocation should prioritize key customer-facing features while keeping marketing/acquisition burn low through organic B2B outreach."
 
-                    # Expanders with institutional visual design
                     with st.expander("👁️ Market Dynamics & Risk Analysis", expanded=True):
                         st.markdown("""
                             <div class="metric-container">
@@ -658,7 +728,7 @@ with col_main_content:
                                 </div>
                                 <div class="metric-card">
                                     <div class="metric-label">Burn Rate Est</div>
-                                    <div class="metric-value neutral">$35k / Mo</div>
+                                    <div class="metric-value neutral">₹35k / Mo</div>
                                 </div>
                                 <div class="metric-card">
                                     <div class="metric-label">Feasibility Index</div>
