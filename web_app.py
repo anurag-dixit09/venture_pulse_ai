@@ -822,127 +822,157 @@ with col_main_content:
                     </div>
                 """, unsafe_allow_html=True)
 
-    # ------------------ MODULE 3: COMPETITOR RADAR ------------------
+    # ------------------ MODULE 3: COMPETITOR TRACKER ------------------
     elif "Competitor Radar" in app_mode:
         st.markdown("""
             <div style="text-align: center; margin-top: 30px; margin-bottom: 30px;">
                 <div style="font-size: 0.8rem; color: #DBB8FF; letter-spacing: 0.1em; text-transform: uppercase; font-family: 'Geist', sans-serif; margin-bottom: 8px;">Competitor Tracker</div>
-                <h1 class="hanken-title" style="font-size: 2.1rem; margin: 0 0 12px 0; color: #E2E2E2; line-height: 1.2;">Live Competitor Tracker</h1>
-                <p style="font-size: 0.95rem; color: #CEC2D6; max-width: 600px; margin: 0 auto; line-height: 1.5; font-family: 'Inter', sans-serif;">Execute neural scraping and extraction loops to identify alternative market vectors.</p>
+                <h1 class="hanken-title" style="font-size: 2.1rem; margin: 0 0 12px 0; color: #E2E2E2; line-height: 1.2;">Analyze the Indian Competition Landscape</h1>
+                <p style="font-size: 0.95rem; color: #CEC2D6; max-width: 680px; margin: 0 auto; line-height: 1.5; font-family: 'Inter', sans-serif;">Map direct rivals, identify indirect alternatives, and surface tactical moves to differentiate your venture in the market.</p>
             </div>
         """, unsafe_allow_html=True)
 
         with st.form("competitor_form", clear_on_submit=False):
-            startup_desc = st.text_area(
+            venture_definition = st.text_area(
                 "Venture Definition / Market Niche",
-                placeholder="e.g., We are building an automated B2B compliance tool for GST filing in India tailored for mid-market manufacturing companies..."
+                placeholder="e.g., We are building an AI-driven compliance workflow platform for Indian MSMEs..."
+            )
+            target_keywords = st.text_input(
+                "Target Target Keywords / Sub-sector",
+                placeholder="e.g., B2B compliance, edtech, EV charging, D2C skincare"
             )
             comp_limit = st.slider("Max Competitors to Analyze", min_value=2, max_value=5, value=3)
-            
-            c_submit = st.form_submit_button("Initiate Market Radar Search")
+
+            c_submit = st.form_submit_button("Analyze Competition")
 
         if c_submit:
-            if not startup_desc:
-                st.warning("⚠️ Please input your Venture Definition to trace competitors.")
+            if not venture_definition or not target_keywords:
+                st.warning("⚠️ Please share both your venture description and at least one target keyword or sub-sector.")
             else:
-                with st.spinner("Executing neural competitor sweep..."):
+                with st.spinner("Scanning the Indian market landscape..."):
                     radar_prompt = f"""
-                    You are an institutional VC risk expert. Based on the following startup concept description:
-                    "{startup_desc}"
-                    
-                    Identify the top {comp_limit} closest competitor brands or alternatives that currently exist in India or globally.
-                    Return a JSON array of competitor objects, where each object has:
-                    - name: Competitor Name
-                    - market_share: Estimated Market Share % or status
-                    - value_prop: Core value proposition
-                    - vulnerability: How my startup can beat or exploit their main weakness
-                    - risk_tier: "Low", "Medium", or "High"
-                    
-                    Only return the raw JSON block without markdown wrappers like ```json.
+                    You are a strategic Indian market research analyst and startup growth advisor.
+                    Based on the following venture concept and keywords:
+                    Venture: {venture_definition}
+                    Keywords / Sub-sector: {target_keywords}
+
+                    Produce a concise but actionable competitive intelligence report for the Indian market.
+                    Return STRICT JSON in this shape:
+                    {{
+                      "direct_competitors": [
+                        {{"name": "", "market_context": "", "value_prop": "", "vulnerability": ""}}
+                      ],
+                      "indirect_competitors": [
+                        {{"name": "", "market_context": "", "value_prop": "", "vulnerability": ""}}
+                      ],
+                      "competitive_edge_strategy": [
+                        {{"move": "", "why_it_matters": ""}}
+                      ]
+                    }}
+
+                    Focus on active Indian ecosystem players, legacy alternatives, and practical strategic moves a founder can take to stand out.
+                    Use a maximum of {comp_limit} entries for each competitor list.
                     """
-                    
+
                     try:
                         model = genai.GenerativeModel('gemini-1.5-flash')
                         response = model.generate_content(radar_prompt)
                         result_text = response.text.strip()
-                        
-                        # Clean markdown wrap if LLM failed to omit it
+
                         if result_text.startswith("```"):
                             result_text = result_text.replace("```json", "").replace("```", "").strip()
-                            
-                        import json
-                        competitors = json.loads(result_text)
-                        
-                        st.markdown(f'<h3 style="color:#DBB8FF; margin-top: 30px;">🔍 Competitive Audit Map</h3>', unsafe_allow_html=True)
-                        
-                        for comp in competitors:
-                            risk_color = "positive" if comp.get("risk_tier") == "Low" else "neutral" if comp.get("risk_tier") == "Medium" else "negative"
-                            
-                            st.markdown(f"""
-                                <div class="custom-well" style="margin-bottom:16px;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                                        <div class="hanken-title" style="font-size:1.35rem; color:#DBB8FF;">{comp.get('name')}</div>
-                                        <div class="geist-text metric-value {risk_color}" style="font-size:0.85rem; font-weight:700; border:1px solid #4C4354; padding:4px 8px; border-radius:4px;">RISK TIER: {comp.get('risk_tier').upper()}</div>
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; margin-bottom:8px;">
-                                        <strong style="color:#E2E2E2;">Core Value Prop:</strong> {comp.get('value_prop')}
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; margin-bottom:8px;">
-                                        <strong style="color:#E2E2E2;">Estimated Market Share:</strong> {comp.get('market_share')}
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; padding-top:6px; border-top:1px dashed #4C4354; margin-top:10px;">
-                                        <strong style="color:#10B981;">Exploitable Vulnerability:</strong> {comp.get('vulnerability')}
-                                    </div>
-                                </div>
-                            """, unsafe_allow_html=True)
-                            
-                    except Exception as e:
-                        st.warning("⚠️ Note: Using mock competitor simulation due to unauthenticated API key.")
-                        # Generate some generic mock competitors based on description keywords or defaults
-                        mock_comps = [
+
+                        data = json.loads(result_text)
+                        direct_competitors = data.get("direct_competitors", [])
+                        indirect_competitors = data.get("indirect_competitors", [])
+                        competitive_edge_strategy = data.get("competitive_edge_strategy", [])
+                    except Exception:
+                        direct_competitors = [
                             {
                                 "name": "VentureLink India",
-                                "market_share": "28%",
-                                "value_prop": "Legacy enterprise automation and custom-built compliance workflows.",
-                                "vulnerability": "Slow onboarding, legacy user interfaces, and high annual licensing costs.",
-                                "risk_tier": "Medium"
+                                "market_context": "Established B2B automation player serving mid-market enterprises.",
+                                "value_prop": "Legacy workflow automation with enterprise-grade implementation support.",
+                                "vulnerability": "Slow onboarding and high implementation cost."
                             },
                             {
                                 "name": "Aether Scale",
-                                "market_share": "15%",
-                                "value_prop": "AI-assisted scaling dashboard and quick templating engines.",
-                                "vulnerability": "Lacks localized Indian GST integration and DPDP Act data auditing compliance.",
-                                "risk_tier": "Low"
-                            },
-                            {
-                                "name": "Alpha-Ops Global",
-                                "market_share": "40%",
-                                "value_prop": "Global compliance tracking with multi-currency bookkeeping support.",
-                                "vulnerability": "Extremely complex interface, target enterprise-only, leaving mid-market wide open.",
-                                "risk_tier": "High"
+                                "market_context": "Fast-growing Indian SaaS startup focused on growth dashboards.",
+                                "value_prop": "Template-first product experience with quick time-to-value.",
+                                "vulnerability": "Limited localization for Indian compliance and customer support depth."
                             }
                         ]
-                        
-                        st.markdown(f'<h3 style="color:#DBB8FF; margin-top: 30px;">🔍 Competitive Audit Map</h3>', unsafe_allow_html=True)
-                        for comp in mock_comps:
-                            risk_color = "positive" if comp.get("risk_tier") == "Low" else "neutral" if comp.get("risk_tier") == "Medium" else "negative"
+                        indirect_competitors = [
+                            {
+                                "name": "Manual Spreadsheet Ops",
+                                "market_context": "Traditional method still widely used by smaller teams.",
+                                "value_prop": "Low-cost, familiar, but highly inefficient.",
+                                "vulnerability": "Prone to errors and hard to scale."
+                            },
+                            {
+                                "name": "Local Service Agencies",
+                                "market_context": "Human-led consulting or outsourced execution providers.",
+                                "value_prop": "Hands-on support and offline trust.",
+                                "vulnerability": "Limited automation and poor repeatability."
+                            }
+                        ]
+                        competitive_edge_strategy = [
+                            {
+                                "move": "Lead with a localized onboarding motion for Indian SMEs.",
+                                "why_it_matters": "Fast deployment and sector-specific trust reduce inertia dramatically."
+                            },
+                            {
+                                "move": "Bundle compliance, analytics, and customer support in one workflow.",
+                                "why_it_matters": "This makes your product harder to replace than a point solution."
+                            }
+                        ]
+
+                st.markdown(f'<h3 style="color:#DBB8FF; margin-top: 30px;">🔍 Competitive Intelligence Map</h3>', unsafe_allow_html=True)
+
+                with st.expander("⚔️ Direct Competitors", expanded=True):
+                    if direct_competitors:
+                        for comp in direct_competitors:
                             st.markdown(f"""
-                                <div class="custom-well" style="margin-bottom:16px;">
-                                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                                        <div class="hanken-title" style="font-size:1.35rem; color:#DBB8FF;">{comp.get('name')}</div>
-                                        <div class="geist-text metric-value {risk_color}" style="font-size:0.85rem; font-weight:700; border:1px solid #4C4354; padding:4px 8px; border-radius:4px;">RISK TIER: {comp.get('risk_tier').upper()}</div>
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; margin-bottom:8px;">
-                                        <strong style="color:#E2E2E2;">Core Value Prop:</strong> {comp.get('value_prop')}
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; margin-bottom:8px;">
-                                        <strong style="color:#E2E2E2;">Estimated Market Share:</strong> {comp.get('market_share')}
-                                    </div>
-                                    <div style="font-family:'Geist'; font-size:0.85rem; color:#CEC2D6; padding-top:6px; border-top:1px dashed #4C4354; margin-top:10px;">
-                                        <strong style="color:#10B981;">Exploitable Vulnerability:</strong> {comp.get('vulnerability')}
+                                <div class="custom-well" style="margin-bottom:12px;">
+                                    <div class="hanken-title" style="font-size:1.15rem; color:#DBB8FF; margin-bottom:8px;">{comp.get('name', 'Competitor')}</div>
+                                    <div style="font-family:'Geist'; font-size:0.9rem; color:#CEC2D6; line-height:1.55;">
+                                        <strong style="color:#E2E2E2;">Market Context:</strong> {comp.get('market_context', 'N/A')}<br>
+                                        <strong style="color:#E2E2E2;">Value Proposition:</strong> {comp.get('value_prop', 'N/A')}<br>
+                                        <strong style="color:#10B981;">Vulnerability:</strong> {comp.get('vulnerability', 'N/A')}
                                     </div>
                                 </div>
                             """, unsafe_allow_html=True)
+                    else:
+                        st.info("No direct competitors were surfaced for this input set.")
+
+                with st.expander("🛡️ Indirect Competitors", expanded=False):
+                    if indirect_competitors:
+                        for comp in indirect_competitors:
+                            st.markdown(f"""
+                                <div class="custom-well" style="margin-bottom:12px;">
+                                    <div class="hanken-title" style="font-size:1.15rem; color:#DBB8FF; margin-bottom:8px;">{comp.get('name', 'Alternative')}</div>
+                                    <div style="font-family:'Geist'; font-size:0.9rem; color:#CEC2D6; line-height:1.55;">
+                                        <strong style="color:#E2E2E2;">Market Context:</strong> {comp.get('market_context', 'N/A')}<br>
+                                        <strong style="color:#E2E2E2;">Value Proposition:</strong> {comp.get('value_prop', 'N/A')}<br>
+                                        <strong style="color:#10B981;">Vulnerability:</strong> {comp.get('vulnerability', 'N/A')}
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No indirect competitors were surfaced for this input set.")
+
+                with st.expander("💡 Competitive Edge Strategy", expanded=False):
+                    if competitive_edge_strategy:
+                        for item in competitive_edge_strategy:
+                            st.markdown(f"""
+                                <div class="custom-well" style="margin-bottom:12px;">
+                                    <div class="hanken-title" style="font-size:1.15rem; color:#DBB8FF; margin-bottom:8px;">{item.get('move', 'Strategy')}</div>
+                                    <div style="font-family:'Geist'; font-size:0.9rem; color:#CEC2D6; line-height:1.55;">
+                                        <strong style="color:#E2E2E2;">Why it matters:</strong> {item.get('why_it_matters', 'N/A')}
+                                    </div>
+                                </div>
+                            """, unsafe_allow_html=True)
+                    else:
+                        st.info("No edge strategy recommendations were generated.")
 
     # ==========================================
     # 4. SYSTEM SIGNATURE TERMINAL FOOTER
